@@ -1,0 +1,177 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas   = ["public", "auth"]
+}
+model AuthUser {
+  id    String @id @db.Uuid
+  email String @unique
+
+  // Relation un-à-un avec votre modèle public
+  userProfile User?
+
+  @@map("users")
+  @@schema("auth")
+}
+
+enum Role {
+  STUDENT
+  INSTRUCTOR
+  ADMIN
+
+  @@schema("public")
+}
+
+enum Category {
+  DESIGN
+  MARKETING
+  DEVELOPPEMENT
+  IA_DATA_SCIENCE
+  BUSINESS
+  PHOTOGRAPHIE
+
+  @@schema("public")
+}
+
+enum Difficulty {
+  DEBUTANT
+  INTERMEDIAIRE
+  AVANCE
+
+  @@schema("public")
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+
+  @@schema("public")
+}
+
+enum MobileOperator {
+  ORANGE
+  MTN
+  MPESA
+  AIRTEL
+
+  @@schema("public")
+}
+
+model User {
+  id              Int          @id @default(autoincrement())
+  supabaseId      String       @unique @db.Uuid // Aligné sur le type de AuthUser.id
+  name            String
+  email           String       @unique
+  avatar          String?      @default("https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=256&auto=format&fit=crop")
+  role            Role         @default(STUDENT)
+  isActive        Boolean      @default(true)
+  
+  authUser        AuthUser     @relation(fields: [supabaseId], references: [id], onDelete: Cascade)
+
+  // Statistiques de l'étudiant
+  premiumStatus   String       @default("Membre Edu Gratuit")
+  primaryCategory String?      @default("Développement Web")
+  studyHours      Int          @default(0)
+  averageGrade    Int          @default(0)
+  
+  // Relations
+  enrollments     Enrollment[]
+  favorites       Favorite[]
+  payments        Payment[]
+ 
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@schema("public")
+}
+
+model Course {
+  id           String       @id @default(uuid())
+  title        String
+  category     Category
+  difficulty   Difficulty
+  description  String       @db.Text
+  image        String       @default("https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=600")
+  duration     String       // Ex: "12h 30m"
+  lessonsCount Int          @default(0)
+  rating       Float        @default(4.5)
+  instructor   String
+  price        Float        @default(0.0)
+  
+  // Relations
+  enrollments  Enrollment[]
+  favorites    Favorite[]
+  payments     Payment[]
+
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@map("courses")
+  @@schema("public")
+}
+
+model Enrollment {
+  id           String    @id @default(uuid())
+  userId       Int
+  courseId     String
+  progress     Int       @default(0) // 0 à 100
+  lastAccessed DateTime? @default(now())
+  
+  // Relations
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course       Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([userId, courseId])
+  @@map("enrollments")
+  @@schema("public")
+}
+
+model Favorite {
+  id        String   @id @default(uuid())
+  userId    Int
+  courseId  String
+  
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, courseId])
+  @@map("favorites")
+  @@schema("public")
+}
+
+model Payment {
+  id            String         @id @default(uuid())
+  userId        Int
+  courseId      String
+  amount        Float
+  operator      MobileOperator
+  phoneNumber   String
+  status        PaymentStatus  @default(PENDING)
+  transactionId String?        @unique
+
+  // Relations
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course        Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@map("payments")
+  @@schema("public")
+}
