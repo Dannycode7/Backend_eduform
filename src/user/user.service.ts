@@ -15,6 +15,11 @@ export class UserService {
         const user=await this.Prisma.user.findUnique({
             where:{
                 supabaseId:supabaseId
+            },
+            include:{
+                favorites:true,
+                enrollments:true,
+                payments:true
             }
         })
         return user
