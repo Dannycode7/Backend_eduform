@@ -9,6 +9,8 @@ import { ConfigModule } from '@nestjs/config';
 import { UserModule } from './user/user.module';
 import { CourseModule } from './course/course.module';
 import { EnrollmentModule } from './enrollment/enrollment.module';
+import { PaymentModule } from './payment/payment.module';
+import { FavoriteModule } from './favorite/favorite.module';
 
 
 
@@ -17,7 +19,7 @@ import { EnrollmentModule } from './enrollment/enrollment.module';
    ConfigModule.forRoot({
       isGlobal: true,
     }),
-  PrismaModule, SupabaseModule, AuthModule, UserModule, CourseModule, EnrollmentModule],
+  PrismaModule, SupabaseModule, AuthModule, UserModule, CourseModule, EnrollmentModule, PaymentModule, FavoriteModule],
   controllers: [AppController],
   providers: [AppService, AuthService],
 })
